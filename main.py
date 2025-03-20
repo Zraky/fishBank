@@ -5,22 +5,25 @@ random.seed(1)
 
 pygame.init()
 
-SCREEN_WIDTH  = 1600
+SCREEN_WIDTH = 1600
 SCREEN_HEIGHT = 1000
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 clock = pygame.time.Clock()
 
-
 FPS = 0
-NB_FISHS = 400
+NB_FISHS = 100
+NB_SHARK = 5
 SPEED = 200
 REFRESH = 0
 
-#by nb
+# by nb
 NB_CLOSER_FISHES = 10
 
-#by distance
+# by distance
 DECAY_RATE = 0.05
+
+DECAY_RATE_SHARK = 1
+SHARK_RADIUS = 50
 
 
 def draw_circle(fishs, name):
@@ -65,7 +68,9 @@ def draw_line(fishs, name=None, level=0):
         for i in range(len(fishs)):
             if (name == fishs[i].name):
                 for j in range(len(fishs[i].close_fish)):
-                    pygame.draw.line(screen, (0, 0, 255), fishs[i].center.get_pos(), fishs[i].close_fish[j].center.get_pos(), 2)
+                    pygame.draw.line(screen, (0, 0, 255), fishs[i].center.get_pos(),
+                                     fishs[i].close_fish[j].center.get_pos(), 2)
+
 
 class Point:
     def __init__(self, x, y):
@@ -79,8 +84,8 @@ class Point:
     def get_pos(self):
         return self.x, self.y
 
-    def draw(self):
-        pygame.draw.circle(screen, (155, 155, 255), (int(self.x), int(self.y)), 3)
+    def draw(self, color):
+        pygame.draw.circle(screen, color, (int(self.x), int(self.y)), 3)
 
 
 class Fish:
@@ -105,14 +110,12 @@ class Fish:
             self.bank_move += fish.vector
             self.close_fish.append(fish)
 
-
         if self.bank_move.length() > 0:
             bank_move = self.bank_move.normalize() * 0.1
             self.vector += bank_move
 
         if self.vector.length() > 0:
             self.vector = self.vector.normalize()
-
 
     def bounce(self):
         if self.center.x <= 0:
@@ -135,23 +138,33 @@ class Fish:
         self.center.move(self.vector, self.speed, dt)
 
     def draw(self):
-        self.center.draw()
+        self.center.draw((100, 255, 255))
 
     def fish_dist(self, other):
         return math.hypot(self.center.x - other.center.x, self.center.y - other.center.y)
 
-    def refesh(self, fishs):
+    def refesh(self, fishs, sharks):
         if (self.refresh_time == self.refresh_wait):
             self.closerFish(fishs)
+            self.flee_shark(sharks)
             self.refresh_wait = 0
+
         else:
             self.refresh_wait += 1
 
-    def update(self, fishs, dt):
-        self.refesh(fishs)
+    def update(self, fishs, sharks, dt):
+        self.refesh(fishs, sharks)
         self.bounce()
         self.move(dt)
         self.draw()
+
+    def flee_shark(self, sharkList):
+        for fish in sharkList:
+            dist = self.fish_dist(fish)
+            if dist < SHARK_RADIUS:
+                self.vector += pygame.Vector2(self.center.x - fish.center.x,
+                                              self.center.y - fish.center.y).normalize() * (1 - 1 / dist)
+            self.vector = self.vector.normalize()
 
 
 class Fishier(Fish):
@@ -181,6 +194,38 @@ class Fishier(Fish):
 
     def bounce(self):
         if self.center.x <= 0:
+            self.center.x = SCREEN_WIDTH
+
+        elif self.center.x >= SCREEN_WIDTH:
+            self.center.x = 0
+
+        if self.center.y <= 0:
+            self.center.y = SCREEN_HEIGHT
+
+
+        elif self.center.y >= SCREEN_HEIGHT:
+            self.center.y = 0
+
+
+class Shark(Fish):
+    def __init__(self, name, x, y, refresh=(0, 0), speed=None):
+        Fish.__init__(self, name, x, y, refresh, speed)
+
+    def closerFish(self, fishList):
+        self.bank_move = pygame.math.Vector2(0, 0)
+
+        fishList = sorted(fishList, key=lambda f: math.hypot(self.center.x - f.center.x, self.center.y - f.center.y))
+
+        fishList.remove(fishList[0])
+
+        self.vector = pygame.Vector2(fishList[0].center.x - self.center.x,
+                                     fishList[0].center.y - self.center.y).normalize()
+
+        if self.vector.length() > 0:
+            self.vector = self.vector.normalize()
+
+    def bounce(self):
+        if self.center.x <= 0:
             self.center.x += SCREEN_WIDTH
 
         elif self.center.x >= SCREEN_WIDTH:
@@ -192,11 +237,33 @@ class Fishier(Fish):
         if self.center.y >= SCREEN_HEIGHT:
             self.center.y -= SCREEN_HEIGHT
 
+    def draw(self):
+        self.center.draw((255, 0, 0))
+
+    def refesh(self, fishs, sharks):
+        if (self.refresh_time == self.refresh_wait):
+            self.closerFish(fishs)
+            self.refresh_wait = 0
+        else:
+            self.refresh_wait += 1
+
+    def eating(self, fish):
+        dist = 100
+        if (self.center.x - fish.center.x <= dist and self.center.y - fish.center.y <=dist):
+            return True
+        return False
+
+
 fishs = []
 
 for i in range(1, NB_FISHS + 1):
-    fishs.append(Fishier(i, random.randint(50, SCREEN_WIDTH - 50), random.randint(50, SCREEN_HEIGHT - 50), (REFRESH, (REFRESH % i))))
+    fishs.append(Fishier(i, random.randint(50, SCREEN_WIDTH - 50), random.randint(50, SCREEN_HEIGHT - 50),
+                         (REFRESH, (REFRESH % i))))
 
+sharks = []
+for i in range(1, NB_SHARK + 1):
+    sharks.append(Shark(i, random.randint(50, SCREEN_WIDTH - 50), random.randint(50, SCREEN_HEIGHT - 50),
+                        (REFRESH, (REFRESH % i))))
 
 police = pygame.font.SysFont(None, 40)
 
@@ -214,13 +281,17 @@ while True:
             sys.exit()
 
     for i, fish in enumerate(fishs):
-        fish.update(fishs, dt)
+        fish.update(fishs, sharks, dt)
 
-    #draw_circle(fishs, 1)
+    for i, shark in enumerate(sharks):
+        shark.update(fishs, sharks, dt)
+
+    # draw_circle(fishs, 1)
 
     draw_line(fishs)
-    #draw_line(fishs, 1)
+    # draw_line(fishs, 1)
     game_credit_text_1 = police.render("FPS : " + str(clock.get_fps()), True, (200, 200, 200))
     screen.blit(game_credit_text_1, (0, 0))
 
     pygame.display.flip()
+
