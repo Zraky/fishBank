@@ -26,6 +26,7 @@ DECAY_RATE_SHARK = 1
 SHARK_RADIUS = 50
 
 
+
 def draw_circle(fishs, name):
     reference_fish = None
 
