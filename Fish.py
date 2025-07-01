@@ -4,7 +4,7 @@ import random
 import Setting
 
 class Fish(pygame.sprite.Sprite):
-    def __init__(self, id, speed, color, rect, vector=None):
+    def __init__(self, id, speed, color, rect, vector=None, refresh=0):
         super().__init__()
         self.id = id
         self.speed = speed
@@ -14,6 +14,8 @@ class Fish(pygame.sprite.Sprite):
             vector = (random.uniform(-1, 1), random.uniform(-1, 1))
         self.vector = pygame.Vector2(vector).normalize()
         self.close_fish = []
+        self.radius = (self.rect.height + self.rect.width) / 2
+        self.refresh_wait = int(refresh)
 
     def update_move(self, fishs, dt):
         self.close_fish.clear()
@@ -104,21 +106,25 @@ class Fish(pygame.sprite.Sprite):
 
             self.vector = (self.vector - new_vec).normalize()
 
-
-
     def move(self, dt):
         self.rect.x += self.vector.x * self.speed * dt
         self.rect.y += self.vector.y * self.speed * dt
 
     def draw(self, color):
-        pygame.draw.circle(Setting.screen, color, self.rect.center, 4)
+        pygame.draw.circle(Setting.screen, color, self.rect.center, self.radius)
 
     def update(self, fishs, shark, dt):
-        #self.draw((0, 0, 0))
-        self.update_move(fishs, dt)
-        self.flee(shark, dt)
+        self.refesh(fishs, shark, dt)
         self.move(dt)
 
+    def refesh(self, fishs, sharks, dt):
+            if (Setting.refresh <= self.refresh_wait):
+                self.update_move(fishs, dt)
+                self.flee(sharks, dt)
+                self.refresh_wait = 0
+
+            else:
+                self.refresh_wait += 1
 
 def update_move_1(self, fishs, dt):
     # movement by count

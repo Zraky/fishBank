@@ -1,18 +1,25 @@
-import random
+import pygame
+import sys
+import Setting
+from ParameterWindow import ParameterWindow
+import tkinter as tk
+import threading
 
-from Setting import *
 import Universe
-
 #random.seed(1)
-
-# Provide initial species, prey, and detection radius
 
 universe = Universe.Universe()
 
-while True:
-    screen.fill((0, 0, 0))  # Clear screen with black
+def open_param_window():
+    root = tk.Tk()
+    root.withdraw()  # Cache la fenêtre principale de Tkinter
+    ParameterWindow(root)
+    root.mainloop()
 
-    dt = clock.tick(60) / 1000
+while True:
+    Setting.screen.fill((0, 0, 0))
+
+    dt = Setting.clock.tick(60) / 1000
 
     if pygame.key.get_pressed()[pygame.K_ESCAPE]:
         pygame.quit()
@@ -23,10 +30,13 @@ while True:
             pygame.quit()
             sys.exit()
 
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 3:  # Clic droit
+                threading.Thread(target=open_param_window, daemon=True).start()
+
     # Do something
     universe.update(dt)
 
-    #print(1/dt)
 
     pygame.display.flip()
-    clock.tick(FPS)
+    Setting.clock.tick(Setting.FPS)

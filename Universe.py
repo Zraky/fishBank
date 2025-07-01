@@ -10,19 +10,24 @@ import Shark
 class Universe:
     def __init__(self):
         self.all_fish = []
-        for i in range(200):
+        x = random.randint(0, Setting.SCREEN_WIDTH)
+        y = random.randint(0, Setting.SCREEN_HEIGHT)
+        rect = pygame.Rect(x, y, 2, 2)
+        fish = Fish.Fish(0, 400, (150, 150, 255), rect)
+        self.all_fish.append(fish)
+        for i in range(1, 100):
             x = random.randint(0, Setting.SCREEN_WIDTH)
             y = random.randint(0, Setting.SCREEN_HEIGHT)
-            rect = pygame.Rect(x, y, 10, 10)
-            fish = Fish.Fish(i, 400, (150, 150, 255), rect)
+            rect = pygame.Rect(x, y, 2, 2)
+            fish = Fish.Fish(i, 400, (150, 150, 255), rect, refresh=(i % Setting.refresh))
             self.all_fish.append(fish)
 
         self.all_shark = []
         for i in range(10):
             x = random.randint(0, Setting.SCREEN_WIDTH)
             y = random.randint(0, Setting.SCREEN_HEIGHT)
-            rect = pygame.Rect(x, y, 10, 10)
-            shark = Shark.Shark(i, 400, (255, 150, 150), rect)
+            rect = pygame.Rect(x, y, 2, 2)
+            shark = Shark.Shark(i, 400, (255, 150, 150), rect, refresh=(i % Setting.refresh))
             self.all_shark.append(shark)
 
     def draw_link(self, fish, color):
@@ -72,13 +77,15 @@ class Universe:
             self.bounce(fish)
             fish.update(prev_all_fish, prev_all_shark, dt)
             fish.draw(fish.color)
-            #if fish.id <= 4:
-            #   self.draw_link(fish, (255, 255, 255))
+            if fish.id in Setting.display_fish_link:
+               self.draw_link(fish, (255, 255, 255))
 
         for fish in self.all_shark:
             self.bounce_shark(fish)
             fish.update(prev_all_fish, prev_all_shark, dt)
 
-            fish.draw(fish.color)
-            if fish.id <= 0:
+            if Setting.display_shark:
+                fish.draw(fish.color)
+
+            if fish.id in Setting.display_shark_link:
                 self.draw_link(fish, (255, 155, 155))

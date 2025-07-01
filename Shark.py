@@ -4,8 +4,8 @@ import Fish
 import pygame
 import Setting
 class Shark(Fish.Fish):
-    def __init__(self, id, speed, color, rect, vector=None):
-        super().__init__(id, speed, color, rect, vector)
+    def __init__(self, id, speed, color, rect, vector=None, refresh= 0):
+        super().__init__(id, speed, color, rect, vector, refresh)
         self.follow_fish = False
 
 

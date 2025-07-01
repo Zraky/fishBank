@@ -20,10 +20,15 @@ max_dist = 80
 
 COHESION_WEIGHT = 0.2
 ALIGNMENT_WEIGHT = 0.5
-view_fish=400
+view_fish = 400  # px
 
+refresh = 5
 
+display_shark = True
 
-pygame.display.set_caption('FishEvolve')
+display_fish_link = []  # fish id
+display_shark_link = []
+
+pygame.display.set_caption('FishBank')
 #icon = pygame.image.load()
 #pygame.display.set_icon(icon)

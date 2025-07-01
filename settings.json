@@ -1,0 +1,14 @@
+{
+    "ALIGNMENT_STRENGTH": 34.946236559139784,
+    "nb_closer_fish": 51,
+    "spacing": 56.45161290322581,
+    "optimal_dist": 61.82795698924731,
+    "max_dist": 77.95698924731182,
+    "COHESION_WEIGHT": 45.6989247311828,
+    "ALIGNMENT_WEIGHT": 1.0,
+    "view_fish": 0,
+    "refresh": 0,
+    "display_shark": true,
+    "display_fish_link": [],
+    "display_shark_link": []
+}
